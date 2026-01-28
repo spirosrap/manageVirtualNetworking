@@ -1,0 +1,65 @@
+digraph udatech_network {
+  rankdir=LR;
+  splines=true;
+  bgcolor="white";
+  fontname="Arial";
+
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=10, color="#2F5597", fillcolor="#EEF3FB"];
+  edge [fontname="Arial", fontsize=9, color="#5B7DB1"];
+
+  subgraph cluster_hub {
+    label="Hub VNet: udatech-starter-vnet (10.0.0.0/16)";
+    color="#2F5597";
+    fillcolor="#EEF3FB";
+    style="rounded,filled";
+
+    hub_default [label="Subnet: default\n10.0.0.0/24\nVM: udatech-starter-vm (10.0.0.4)\nAccess: Bastion SSH", fillcolor="#E8F0FE"];
+    bastion [label="Azure Bastion\nbastion-udatech\nAzureBastionSubnet 10.0.1.0/26", fillcolor="#DDEBFF"];
+  }
+
+  subgraph cluster_hr {
+    label="HR Spoke: vnet-hr (10.10.0.0/16)";
+    color="#38761D";
+    fillcolor="#EAF4EA";
+    style="rounded,filled";
+    hr_app  [label="snet-hr-app\n10.10.1.0/24\nNSG: nsg-hr", fillcolor="#EAF4EA"];
+    hr_data [label="snet-hr-data\n10.10.2.0/24\nNSG: nsg-hr", fillcolor="#EAF4EA"];
+    hr_pe   [label="snet-hr-pe\n10.10.3.0/24\nNSG: nsg-hr", fillcolor="#EAF4EA"];
+  }
+
+  subgraph cluster_sales {
+    label="Sales Spoke: vnet-sales (10.20.0.0/16)";
+    color="#A61C00";
+    fillcolor="#FBEAE6";
+    style="rounded,filled";
+    sales_app [label="snet-sales-app\n10.20.1.0/24\nNSG: nsg-sales\nILB: lb-sales-ilb (10.20.1.4)\nBackends: sales-web-1 (10.20.1.5), sales-web-2 (10.20.1.6)", fillcolor="#FBEAE6"];
+    sales_data [label="snet-sales-data\n10.20.2.0/24\nNSG: nsg-sales", fillcolor="#FBEAE6"];
+    sales_pe [label="snet-sales-pe\n10.20.3.0/24\nNSG: nsg-sales", fillcolor="#FBEAE6"];
+  }
+
+  subgraph cluster_devops {
+    label="DevOps Spoke: vnet-devops (10.30.0.0/16)";
+    color="#674EA7";
+    fillcolor="#F0ECFA";
+    style="rounded,filled";
+    dev_tools  [label="snet-devops-tools\n10.30.1.0/24\nNSG: nsg-devops", fillcolor="#F0ECFA"];
+    dev_agents [label="snet-devops-agents\n10.30.2.0/24\nNSG: nsg-devops", fillcolor="#F0ECFA"];
+    dev_pe     [label="snet-devops-pe\n10.30.3.0/24\nNSG: nsg-devops\nStorage PE: 10.30.3.4", fillcolor="#F0ECFA"];
+    storage    [label="Storage (Blob)\nudatechsa4c79f445\nPrivate Endpoint: 10.30.3.4\nPrivate DNS: privatelink.blob.core.windows.net", fillcolor="#E6E0F8"];
+  }
+
+  # Peerings (bidirectional)
+  hub_default -> hr_app    [label="VNet peering (bidirectional)", dir=both];
+  hub_default -> sales_app [label="VNet peering (bidirectional)", dir=both];
+  hub_default -> dev_tools [label="VNet peering (bidirectional)", dir=both];
+
+  # Bastion access path
+  bastion -> hub_default [label="SSH/RDP over private IP", dir=both, color="#2F5597"];
+
+  # Private endpoint + DNS
+  dev_pe -> storage [label="Private Endpoint", dir=both, color="#674EA7"];
+
+  # Legend
+  legend [shape=note, color="#444444", fillcolor="#FFFFFF", label="Legend:\n- Hub/Spoke connected via bidirectional VNet peering\n- Department isolation enforced by subnet NSGs (deny inter-department)\n- Admin access via Azure Bastion (no public SSH/RDP)\n- PaaS access via Private Endpoint + Private DNS"];
+}
+
