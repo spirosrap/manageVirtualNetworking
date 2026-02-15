@@ -21,5 +21,5 @@ This repository starts with **assessment + network architecture documentation** 
 
 ## Non-goals (for this phase)
 
-- This repo is not meant to be a reusable IaC module (it documents one project run)
+- This repo is not meant to be a reusable IaC module (it documents one project run) 
 
